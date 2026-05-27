@@ -23,7 +23,7 @@ function Sidebar() {
 
   return (
 
-    <div className="w-[280px] min-h-screen bg-black/40 border-r border-white/10 backdrop-blur-2xl fixed left-0 top-0 p-6 flex flex-col justify-between">
+    <div className="hidden md:flex w-[280px] min-h-screen bg-black/40 border-r border-white/10 backdrop-blur-2xl fixed left-0 top-0 p-6 flex-col justify-between">
 
       <div>
 

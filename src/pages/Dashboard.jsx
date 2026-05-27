@@ -1,8 +1,6 @@
-import { useState } from "react"
-import { getAllPets, deletePet } from "../services/petService"
-import { useEffect } from "react"
+import { useState, useEffect } from "react"
+import { deletePet } from "../services/petService"
 import { useNavigate } from "react-router-dom"
-
 
 import Sidebar from "../components/dashboard/Sidebar"
 import StatsCard from "../components/dashboard/StatsCard"
@@ -15,10 +13,17 @@ function Dashboard() {
 
   const navigate = useNavigate()
 
+  const [myPets, setMyPets] = useState([])
+
+  const [nearbyPets, setNearbyPets] = useState([])
+
+  const [loading, setLoading] = useState(true)
+
+  const [showSidebar, setShowSidebar] = useState(false)
+
   useEffect(() => {
 
     const user = localStorage.getItem("userEmail")
-
 
     if (!user) {
       navigate("/login")
@@ -28,46 +33,41 @@ function Dashboard() {
 
   const user = localStorage.getItem("userEmail")
 
- const [myPets, setMyPets] = useState([])
-
- const [nearbyPets, setNearbyPets] = useState([])
-
-
-
-
   const fetchPets = async () => {
 
-  try {
+    try {
 
-    const userEmail = localStorage.getItem("userEmail")
+      setLoading(true)
 
-    const myPetsResponse = await fetch(
-      `http://localhost:8081/pets/myPets/${userEmail}`
-    )
+      const userEmail = localStorage.getItem("userEmail")
 
-    const nearbyPetsResponse = await fetch(
-      `http://localhost:8081git status/pets/nearby/${userEmail}`
-    )
+      const myPetsResponse = await fetch(
+        `http://localhost:8081/pets/myPets/${userEmail}`
+      )
 
-    const myPetsData = await myPetsResponse.json()
+      const nearbyPetsResponse = await fetch(
+        `http://localhost:8081/pets/nearby/${userEmail}`
+      )
 
-    const nearbyPetsData = await nearbyPetsResponse.json()
+      const myPetsData = await myPetsResponse.json()
 
-    setMyPets(myPetsData)
+      const nearbyPetsData = await nearbyPetsResponse.json()
 
-    setNearbyPets(nearbyPetsData)
+      setMyPets(myPetsData)
 
-  } catch (error) {
+      setNearbyPets(nearbyPetsData)
 
-    console.log(error)
+      setLoading(false)
+
+    } catch (error) {
+
+      console.log(error)
+
+      setLoading(false)
+    }
   }
-}
 
   useEffect(() => {
-
-  
-
-   
 
     fetchPets()
 
@@ -75,35 +75,52 @@ function Dashboard() {
 
   const handleDeletePet = async (id) => {
 
-  try {
+    try {
 
-    await deletePet(id)
+      await deletePet(id)
 
-    fetchPets()
+      fetchPets()
 
-  } catch (error) {
+    } catch (error) {
 
-    console.log(error)
+      console.log(error)
+    }
   }
-}
 
   return (
 
     <div className="min-h-screen bg-gradient-to-br from-black via-slate-950 to-blue-950 text-white flex">
 
-      {/* Sidebar */}
+      <div className="md:hidden fixed top-0 left-0 w-full bg-black/80 backdrop-blur-xl border-b border-white/10 z-50 px-6 py-4 flex items-center justify-between">
+
+        <h1 className="text-3xl font-black text-cyan-400">
+          PawConnect
+        </h1>
+
+        <button
+          onClick={() => setShowSidebar(!showSidebar)}
+          className="text-4xl"
+        >
+          ☰
+        </button>
+
+      </div>
 
       <Sidebar />
 
-      {/* Main Content */}
+      {showSidebar && (
 
-      <div className="ml-[280px] w-full p-10">
+        <div className="fixed top-0 left-0 z-50 md:hidden">
 
-        {/* Hero */}
+          <Sidebar />
+
+        </div>
+
+      )}
+
+      <div className="md:ml-[280px] w-full p-6 md:p-10 pt-28 md:pt-10">
 
         <HeroBanner user={user} />
-
-        {/* Stats */}
 
         <div className="grid md:grid-cols-3 gap-8 mt-10">
 
@@ -130,72 +147,78 @@ function Dashboard() {
 
         </div>
 
-        {/* Quick Actions */}
-
         <QuickActions />
-
-        {/* Pet Cards */}
 
         <div className="mt-14">
 
-  <h2 className="text-5xl font-black mb-8">
-    My Pets 🐾
-  </h2>
+          <h2 className="text-5xl font-black mb-8">
+            My Pets 🐾
+          </h2>
 
-  <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-8">
 
-    {myPets.map((pet) => {
-      return (
-        <PetCard
-          key={pet.id}
-          id={pet.id}
-          name={pet.name}
-          age={pet.age}
-          breed={pet.breed}
-          gender={pet.gender}
-          location={pet.location}
-          description={pet.description}
-          image={pet.imageUrl}
-          onDelete={handleDeletePet}
-          showDelete={true}
-        />
-      )
-    })}
+            {loading && (
+              <h2 className="text-2xl text-cyan-400">
+                Loading pets...
+              </h2>
+            )}
 
-  </div>
+            {!loading && myPets.length === 0 && (
+              <h2 className="text-2xl text-slate-400">
+                No pets found 🐾
+              </h2>
+            )}
 
-</div>
+            {myPets.map((pet) => {
+              return (
+                <PetCard
+                  key={pet.id}
+                  id={pet.id}
+                  name={pet.name}
+                  age={pet.age}
+                  breed={pet.breed}
+                  gender={pet.gender}
+                  location={pet.location}
+                  description={pet.description}
+                  image={pet.imageUrl}
+                  onDelete={handleDeletePet}
+                  showDelete={true}
+                />
+              )
+            })}
 
-<div className="mt-14">
+          </div>
 
-  <h2 className="text-5xl font-black mb-8">
-    Nearby Pets 🐾
-  </h2>
+        </div>
 
-  <div className="grid md:grid-cols-3 gap-8">
+        <div className="mt-14">
 
-    {nearbyPets.map((pet) => {
-      return (
-        <PetCard
-          key={pet.id}
-          id={pet.id}
-          name={pet.name}
-          age={pet.age}
-          breed={pet.breed}
-          gender={pet.gender}
-          location={pet.location}
-          description={pet.description}
-          image={pet.imageUrl}
-          showDelete={false}
-        />
-      )
-    })}
+          <h2 className="text-5xl font-black mb-8">
+            Nearby Pets 🐾
+          </h2>
 
-  </div>
+          <div className="grid md:grid-cols-3 gap-8">
 
-</div>
+            {nearbyPets.map((pet) => {
+              return (
+                <PetCard
+                  key={pet.id}
+                  id={pet.id}
+                  name={pet.name}
+                  age={pet.age}
+                  breed={pet.breed}
+                  gender={pet.gender}
+                  location={pet.location}
+                  description={pet.description}
+                  image={pet.imageUrl}
+                  showDelete={false}
+                />
+              )
+            })}
 
-        {/* Activity */}
+          </div>
+
+        </div>
 
         <div className="mt-14">
 

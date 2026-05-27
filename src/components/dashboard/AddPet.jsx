@@ -5,6 +5,7 @@ import { addPet } from "../../services/petService"
 function AddPet() {
 
   const [petData, setPetData] = useState({
+
     name: "",
     breed: "",
     age: "",
@@ -14,8 +15,9 @@ function AddPet() {
     imageUrl: "",
     status: "Available",
     ownerEmail: localStorage.getItem("userEmail")
-    
   })
+
+  const [previewImage, setPreviewImage] = useState("")
 
   const handleChange = (e) => {
 
@@ -25,9 +27,65 @@ function AddPet() {
     })
   }
 
+  const handleImageUpload = async (e) => {
+
+    const file = e.target.files[0]
+
+    setPreviewImage(URL.createObjectURL(file))
+
+    const data = new FormData()
+
+    data.append("file", file)
+
+    data.append("upload_preset", "pawconnect")
+
+    data.append("cloud_name", "dtnu0fg67")
+
+    try {
+
+      const response = await fetch(
+        "https://api.cloudinary.com/v1_1/dtnu0fg67/image/upload",
+        {
+          method: "POST",
+          body: data
+        }
+      )
+
+      const uploadedImage = await response.json()
+
+      setPetData({
+        ...petData,
+        imageUrl: uploadedImage.url
+      })
+
+      alert("Image Uploaded Successfully 📸")
+
+    } catch (error) {
+
+      console.log(error)
+
+      alert("Image Upload Failed ❌")
+    }
+  }
+
   const handleSubmit = async () => {
 
     try {
+
+      if (
+        !petData.name ||
+        !petData.breed ||
+        !petData.age ||
+        !petData.gender ||
+        !petData.location ||
+        !petData.description ||
+        !petData.imageUrl
+      ) {
+
+        alert("Please fill all fields ❌")
+
+        return
+      }
 
       await addPet(petData)
 
@@ -57,15 +115,9 @@ function AddPet() {
 
     <div className="min-h-screen bg-gradient-to-br from-black via-slate-950 to-blue-950 text-white flex">
 
-      {/* Sidebar */}
-
       <Sidebar />
 
-      {/* Main Content */}
-
       <div className="ml-[280px] w-full p-10">
-
-        {/* Header */}
 
         <div className="bg-white/10 border border-white/10 backdrop-blur-2xl rounded-[40px] p-10 shadow-2xl">
 
@@ -74,12 +126,10 @@ function AddPet() {
           </h1>
 
           <p className="text-slate-300 text-2xl mt-4">
-            Help pets find loving homes through PawConnect.
+            Help animals find loving homes through PawConnect.
           </p>
 
         </div>
-
-        {/* Form */}
 
         <div className="mt-10 bg-white/5 border border-white/10 backdrop-blur-2xl rounded-[40px] p-10 shadow-2xl">
 
@@ -131,13 +181,23 @@ function AddPet() {
             />
 
             <input
-              type="text"
-              name="imageUrl"
-              placeholder="Image URL"
-              value={petData.imageUrl}
-              onChange={handleChange}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
               className="bg-white/10 border border-white/10 rounded-2xl p-5 text-xl outline-none focus:border-cyan-400"
             />
+
+            {previewImage && (
+
+  <img
+    src={previewImage}
+    alt="Preview"
+    className="w-full h-[300px] object-cover rounded-3xl mt-6 border border-white/10"
+  />
+
+)}
+
+            
 
           </div>
 
